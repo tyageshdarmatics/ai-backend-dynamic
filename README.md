@@ -11,32 +11,32 @@ request header, with a default store fallback for clients that don't supply one
 ## Architecture overview
 
 ```
-┌─────────────────────────────┐
-│   Flutter app   /   Shopify │
-│   (no header)       app     │
-└────────┬─────────────┬──────┘
-         │             │ x-shop-domain: <shop>
-         ▼             ▼
-  ┌──────────────────────────────┐
-  │       Express server         │
-  │   resolveShop(req)           │
-  │   ─ header → body → default  │
-  └──────────────┬───────────────┘
-                 │
-          ┌──────┴───────────────────────────┐
-          ▼                                  ▼
-┌─────────────────────┐            ┌─────────────────────┐
-│   Shopify Admin API │            │      Gemini AI      │
-│   (per-shop token   │            │   (analysis +       │
-│    from Mongo)      │            │    recommendations) │
-└──────────┬──────────┘            └─────────────────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  Two-tier cache     │
-│  ─ in-memory (1h)   │
-│  ─ Mongo (1h TTL)   │
-└─────────────────────┘
+                ┌─────────────────────────────┐
+                │   Flutter app   /   Shopify │
+                │   (no header)       app     │
+                └────────┬─────────────┬──────┘
+                         │             │ x-shop-domain: <shop>
+                         ▼             ▼
+                ┌──────────────────────────────┐
+                │       Express server         │
+                │   resolveShop(req)           │
+                │   ─ header → body → default  │
+                └──────────────┬───────────────┘
+                               │
+              ┌────────────────┴─────────────────┐
+              ▼                                  ▼
+   ┌─────────────────────┐            ┌─────────────────────┐
+   │   Shopify Admin API │            │      Gemini AI      │
+   │   (per-shop token   │            │   (analysis +       │
+   │    from Mongo)      │            │    recommendations) │
+   └──────────┬──────────┘            └─────────────────────┘
+              │
+              ▼
+   ┌─────────────────────┐
+   │  Two-tier cache     │
+   │  ─ in-memory (1h)   │
+   │  ─ Mongo (1h TTL)   │
+   └─────────────────────┘
 ```
 
 ### Shop resolution priority

@@ -97,8 +97,8 @@ SHOPIFY_ADMIN_API_VERSION=2024-10        # optional, defaults to 2024-01
 
 # --- MongoDB Atlas ---
 MONGODB_URI=mongodb+srv://USER:PASS@cluster.mongodb.net/
-MONGODB_DB=chatbot                       # primary db (usage_logs, product_cache)
-MONGODB_SHOP_DB=dermatics_app_remix      # where the Shop credential collection lives
+MONGODB_DB=collection_name         # primary db (usage_logs, product_cache)
+MONGODB_SHOP_DB=database_name      # where the Shop credential collection lives
 
 # --- Admin usage analytics endpoints ---
 ADMIN_API_KEY=replace_with_a_strong_secret

@@ -49,7 +49,7 @@ const SchemaType = {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const AI_MODEL = 'gemini-2.5-flash';
+const AI_MODEL = process.env.AI_MODEL;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -156,17 +156,17 @@ async function getAllProducts() {
         while (hasNextPage) {
             const query = `
             {
-              products(first: 250${endCursor ? `, after: "${endCursor}"` : ''}) {
+            products(first: 250${endCursor ? `, after: "${endCursor}"` : ''}) {
                 pageInfo { hasNextPage, endCursor }
                 edges {
-                  node {
+                    node {
                     id, title, description, productType, handle, onlineStoreUrl,
                     images(first: 1) { edges { node { url } } }
                     variants(first: 1) { edges { node { id, price { amount, currencyCode }, compareAtPrice { amount, currencyCode } } } }
                     tags
-                  }
+                        }
+                    }
                 }
-              }
             }
             `;
             const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/${SHOPIFY_API_VERSION}/graphql.json`, {
@@ -218,17 +218,17 @@ async function getAllProductsforshopify() {
         while (hasNextPage) {
             const query = `
             {
-              products(first: 250${endCursor ? `, after: "${endCursor}"` : ''}) {
+            products(first: 250${endCursor ? `, after: "${endCursor}"` : ''}) {
                 pageInfo { hasNextPage, endCursor }
                 edges {
-                  node {
+                node {
                     id, title, description, productType, handle, onlineStoreUrl,
                     images(first: 1) { edges { node { url } } }
                     variants(first: 1) { edges { node { id, price { amount, currencyCode }, compareAtPrice { amount, currencyCode } } } }
                     tags
-                  }
+                    }
                 }
-              }
+            }
             }
             `;
             const response = await fetch(`https://${SHOPIFY_DOMAIN}/api/2024-01/graphql.json`, {
@@ -343,9 +343,9 @@ app.post('/api/analyze-skin', async (req, res) => {
         3. Specify exact location (Forehead, Left Cheek, Right Cheek, Nose, Chin, Under Eyes, Temple, Jaw, etc.)
         4. MANDATORY: A very short, one-sentence description of the problem.
         5. MANDATORY: Draw a bounding box around EVERY visible instance using normalized coordinates (0.0-1.0)
-           - x1, y1 = top-left corner
-           - x2, y2 = bottom-right corner
-           - Example: if acne is on left cheek, draw box around that area
+            - x1, y1 = top-left corner
+            - x2, y2 = bottom-right corner
+            - Example: if acne is on left cheek, draw box around that area
         
         **Grouping Strategy:**
         - Group similar conditions into categories (e.g., "Acne & Blemishes", "Signs of Aging", "Pigmentation Issues", "Texture & Pores")
@@ -356,7 +356,6 @@ app.post('/api/analyze-skin', async (req, res) => {
         // const response = await generateContentWithFailover({  // replaced by tracked call below
         const response = await generateContentTracked(generateContentWithFailover, {
             model: AI_MODEL,
-            //model: 'gemini-2.5-flash',
             contents: { parts: [...imageParts, { text: prompt }] },
             config: {
                 responseMimeType: "application/json",
@@ -475,17 +474,16 @@ app.post('/api/analyze-hair', async (req, res) => {
         3. **Location:** Specific area (e.g., "Left Temple", "Crown", "Nape", "Part Line").
         4. **Description:** A very short, one-sentence description of the problem.
         5. **Bounding Boxes:** 
-           - **MANDATORY VISUALIZATION TASK:** If you detect any Hair Loss (including Receding Hairline, Thinning, or Alopecia), you **MUST** return a bounding box.
-           - Draw the box around the entire receding area or bald spot.
-           - Use normalized coordinates (0.0 - 1.0).
-           - Do NOT return empty bounding boxes for visible conditions.
+            - **MANDATORY VISUALIZATION TASK:** If you detect any Hair Loss (including Receding Hairline, Thinning, or Alopecia), you **MUST** return a bounding box.
+            - Draw the box around the entire receding area or bald spot.
+            - Use normalized coordinates (0.0 - 1.0).
+            - Do NOT return empty bounding boxes for visible conditions.
         
         Provide the output strictly in JSON format according to the provided schema.`;
 
         // const response = await generateContentWithFailover({  // replaced by tracked call below
         const response = await generateContentTracked(generateContentWithFailover, {
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [...imageParts, { text: prompt }] },
             config: {
                 responseMimeType: "application/json",
@@ -601,7 +599,7 @@ app.post('/api/recommend-skin', async (req, res) => {
         3. Match the single best product for each step using only the catalog.
         4. For each step, you can recommend one "Recommended" product and optionally one "Alternative" product if suitable.
         5. MANDATORY: For each product, provide:
-           - "reason": a short explanation (max 10 words) why it's recommended for this specific user.
+            - "reason": a short explanation (max 10 words) why it's recommended for this specific user.
 //          - "when": exact timing (e.g., "Morning", "After cleansing", "Before bed on dry scalp")
 //          - "howToUse": step-by-step application instructions specific to this product (2-3 sentences)
 //          - "frequency": how often to use it (e.g., "Once daily", "3-4 times per week")
@@ -615,7 +613,6 @@ app.post('/api/recommend-skin', async (req, res) => {
         // const response = await generateContentWithFailover({  // replaced by tracked call below
         const response = await generateContentTracked(generateContentWithFailover, {
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] },
             config: {
                 responseMimeType: "application/json",
@@ -667,6 +664,7 @@ app.post('/api/recommend-skin', async (req, res) => {
         }, trackCtx); // tracking context (added)
 
         const recommendations = JSON.parse(response.text.trim());
+        console.log("[Completed]- INFO: AI Skin response parsed successfully");
 
         const hydrate = (list) => (list || []).map(p => {
             const full = skincareCatalog.find(prod => prod.variantId === p.productId || prod.name === p.name);
@@ -744,7 +742,7 @@ app.post('/api/recommend-hair', async (req, res) => {
         2. Match the most potent product for each step using only the catalog.
         3. For each step, you can recommend one "Recommended" product and optionally one "Alternative" product if suitable.
         4. MANDATORY: For each product, provide:
-           - "reason": a short explanation (max 10 words) why it's recommended for this specific user.
+            - "reason": a short explanation (max 10 words) why it's recommended for this specific user.
 //            - "when": exact timing (e.g., "During bath", "On dry scalp before bed", "After shampooing")
 //            - "howToUse": step-by-step application instructions specific to this product (2-3 sentences)
 //            - "frequency": how often to use it (e.g., "Daily", "3 times per week", "Once daily (PM)")
@@ -757,8 +755,7 @@ app.post('/api/recommend-hair', async (req, res) => {
         - Return JSON format only.`;
         // const response = await generateContentWithFailover({  // replaced by tracked call below
         const response = await generateContentTracked(generateContentWithFailover, {
-             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
+            model: AI_MODEL,
             contents: { parts: [{ text: prompt }] },
             config: {
                 responseMimeType: "application/json",
@@ -810,7 +807,7 @@ app.post('/api/recommend-hair', async (req, res) => {
         }, trackCtx); // tracking context (added)
 
         const recommendations = JSON.parse(response.text.trim());
-        console.log("- INFO: AI hair response parsed successfully");
+        console.log("[Completed]- INFO: AI hair response parsed successfully");
 
         const hydrate = (list) => (list || []).map(item => {
             const full = hairCatalog.find(p => p.variantId === item.productId || p.name === item.name);
@@ -893,7 +890,6 @@ app.post('/api/doctor-report', async (req, res) => {
                 // const instructionsResponse = await generateContentWithFailover({  // replaced by tracked call below
                 const instructionsResponse = await generateContentTracked(generateContentWithFailover, {
                     model: AI_MODEL,
-                    // model: 'gemini-2.5-flash',
                     contents: { parts: [{ text: instructionsPrompt }] },
                     config: {
                         responseMimeType: "application/json",
@@ -950,7 +946,6 @@ app.post('/api/doctor-report', async (req, res) => {
         // const aiResponse = await generateContentWithFailover({  // replaced by tracked call below
         const aiResponse = await generateContentTracked(generateContentWithFailover, {
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] }
         }, trackCtx); // tracking context (added)
         const summaryText = aiResponse.text.trim();
@@ -1305,10 +1300,10 @@ app.post('/api/chat', async (req, res) => {
         **GUIDELINES:**
         1. **Tone**: Be professional, warm, and authoritative. Use "we" to represent Dermatics.
         2. **Structure**: 
-           - Start with a brief, friendly acknowledgement.
-           - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
-           - Use * Bullet points for lists.
-           - Use **bold text** for important keywords, product names, or skin/hair conditions.
+            - Start with a brief, friendly acknowledgement.
+            - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
+            - Use * Bullet points for lists.
+            - Use **bold text** for important keywords, product names, or skin/hair conditions.
         3. **Expertise**: Synthesize their analysis data with the products we've recommended.
         4. **Safety**: If a condition looks severe or requires medical intervention (e.g. deep scarring, severe hair loss), always advise booking a consultation with our in-house dermatologists.
         5. **Conciseness**: Keep responses under 150 words. Avoid generic fluff.
@@ -1318,7 +1313,6 @@ app.post('/api/chat', async (req, res) => {
         // const response = await generateContentWithFailover({  // replaced by tracked call below
         const response = await generateContentTracked(generateContentWithFailover, {
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] }
         }, trackCtx); // tracking context (added)
 
@@ -1353,10 +1347,10 @@ app.post('/api/skinchat', async (req, res) => {
         **GUIDELINES:**
         1. **Tone**: Be professional, warm, and authoritative. Use "we" to represent Dermatics.
         2. **Structure**: 
-           - Start with a brief, friendly acknowledgement.
-           - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
-           - Use * Bullet points for lists.
-           - Use **bold text** for important keywords, product names, or skin/hair conditions.
+            - Start with a brief, friendly acknowledgement.
+            - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
+            - Use * Bullet points for lists.
+            - Use **bold text** for important keywords, product names, or skin/hair conditions.
         3. **Expertise**: Synthesize their analysis data with the products we've recommended.
         4. **Safety**: If a condition looks severe or requires medical intervention (e.g. deep scarring, acne), always advise booking a consultation with our in-house dermatologists.
         5. **Conciseness**: Keep responses under 100 words. Avoid generic fluff.
@@ -1372,7 +1366,6 @@ app.post('/api/skinchat', async (req, res) => {
 
         const response = await generateContentWithFailover({
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] }
         });
 
@@ -1408,10 +1401,10 @@ app.post('/api/hairchat', async (req, res) => {
         **GUIDELINES:**
         1. **Tone**: Be professional, warm, and authoritative. Use "we" to represent Dermatics.
         2. **Structure**: 
-           - Start with a brief, friendly acknowledgement.
-           - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
-           - Use * Bullet points for lists.
-           - Use **bold text** for important keywords, product names, or hair/Scalp conditions.
+            - Start with a brief, friendly acknowledgement.
+            - Use ### **Headings** for different sections (e.g. ### Morning Routine). Do NOT format headings as bullet points or quotes.
+            - Use * Bullet points for lists.
+            - Use **bold text** for important keywords, product names, or hair/Scalp conditions.
         3. **Expertise**: Synthesize their analysis data with the products we've recommended.
         4. **Safety**: If a condition looks severe or requires medical intervention (e.g. deep scarring, hair loss), always advise booking a consultation with our in-house dermatologists.
         5. **Conciseness**: Keep responses under 100 words. Avoid generic fluff.
@@ -1427,7 +1420,6 @@ app.post('/api/hairchat', async (req, res) => {
 
         const response = await generateContentWithFailover({
             model: AI_MODEL,
-            // model: 'gemini-2.5-flash',
             contents: { parts: [{ text: prompt }] }
         });
 

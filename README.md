@@ -343,7 +343,7 @@ Per-shop spend and endpoint breakdown.
 **PowerShell**
 
 ```powershell
-$shop = "dermatics-in.myshopify.com"
+$shop = "your-store.myshopify.com"
 Invoke-RestMethod -Method Get -Uri "http://localhost:5000/api/usage/by-shop/$shop" `
   -Headers @{ "x-admin-key" = "your_random_long_string" } | ConvertTo-Json -Depth 6
 ```
@@ -352,14 +352,14 @@ Invoke-RestMethod -Method Get -Uri "http://localhost:5000/api/usage/by-shop/$sho
 
 ```bash
 curl -H "x-admin-key: your_random_long_string" \
-     http://localhost:5000/api/usage/by-shop/dermatics-in.myshopify.com
+     http://localhost:5000/api/usage/by-shop/your-store.myshopify.com
 ```
 
 **Response shape**
 
 ```json
 {
-  "shopDomain": "dermatics-in.myshopify.com",
+  "shopDomain": "your-store.myshopify.com",
   "totals": { "totalCalls": 134, "totalTokens": 502000, "totalCostUsd": 0.21 },
   "byEndpoint": [
     { "_id": "/api/recommend-hair", "calls": 60, "tokens": 350000, "costUsd": 0.14 },
@@ -396,7 +396,7 @@ Invoke-RestMethod -Method Post -Uri "http://localhost:5000/api/recommend-skin" `
 
 # 2. Query usage
 Invoke-RestMethod -Uri "http://localhost:5000/api/usage/user/smoketest_user" -Headers @{ "x-admin-key" = $admin }
-Invoke-RestMethod -Uri "http://localhost:5000/api/usage/by-shop/dermatics-in.myshopify.com" -Headers @{ "x-admin-key" = $admin }
+Invoke-RestMethod -Uri "http://localhost:5000/api/usage/by-shop/your-store.myshopify.com" -Headers @{ "x-admin-key" = $admin }
 Invoke-RestMethod -Uri "http://localhost:5000/api/usage/summary" -Headers @{ "x-admin-key" = $admin }
 ```
 
